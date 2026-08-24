@@ -3,6 +3,8 @@
   import { goto } from '$app/navigation';
   import { formatDateTime, formatDuration, getStatusText, getStatusStyle } from '$lib/storage';
   import Statistics from '$lib/components/Statistics.svelte';
+  import DynamicTable from '$lib/components/DynamicTable.svelte';
+  import type { ColumnDef, RowAction } from '$lib/components/dynamic-table-types';
 
   // 从服务端加载的数据
   interface Props {
@@ -35,19 +37,19 @@
   let filteredRecords = $derived(sortedRecords.filter(record => {
     // 关键字搜索（匹配申请人）
     const keyword = searchKeyword.toLowerCase();
-    const matchKeyword = !keyword || 
+    const matchKeyword = !keyword ||
       record.applicantName.toLowerCase().includes(keyword);
-    
+
     // 状态筛选
     const matchStatus = filterStatus === 'all' || record.status === filterStatus;
-    
+
     // 时间范围筛选（按提交时间）
     let matchDate = true;
     if (filterDateRange !== 'all') {
       const submitDate = new Date(record.submitTime);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
       if (filterDateRange === 'today') {
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
@@ -81,9 +83,50 @@
         }
       }
     }
-    
+
     return matchKeyword && matchStatus && matchDate;
   }));
+
+  // ---- 行内操作按钮 ----
+  const rowActions: RowAction[] = [
+    {
+      key: 'primary',
+      show: (record) => record.status === 'pending',
+      label: '审批',
+      onclick: (record) => goto(`/record/${record.id}`)
+    },
+    {
+      key: 'edit',
+      show: (record) => record.status === 'rejected',
+      label: '编辑',
+      class: 'px-2 py-1 text-xs text-orange-600 hover:text-white hover:bg-orange-600 border border-orange-600 rounded transition-colors',
+      onclick: (record) => handleEdit(record)
+    },
+    {
+      key: 'view',
+      show: (record) => record.status !== 'pending' && record.status !== 'rejected',
+      label: '查看',
+      class: 'px-2 py-1 text-xs text-gray-600 hover:text-white hover:bg-gray-600 border border-gray-600 rounded transition-colors',
+      onclick: (record) => goto(`/record/${record.id}`)
+    },
+    {
+      key: 'delete',
+      show: (record) => record.status !== 'approved',
+      label: '删除',
+      class: 'px-2 py-1 text-xs text-red-600 hover:text-white hover:bg-red-600 border border-red-600 rounded transition-colors',
+      onclick: (record) => handleDeleteConfirm(record.id)
+    }
+  ];
+
+  // ---- 分页 ----
+  let currentPage = $state(1);
+
+  // 筛选条件变化时回到第一页
+  $effect(() => {
+    // 读取筛选条件以建立依赖
+    searchKeyword; filterStatus; filterDateRange; filterStartDate; filterEndDate;
+    currentPage = 1;
+  });
 
   // 是否有筛选条件激活
   let hasActiveFilter = $derived(
@@ -150,7 +193,7 @@
     <div class="inline-flex bg-white rounded-xl shadow-md p-1">
       <button
         onclick={() => activeTab = 'list'}
-        class="px-5 py-2 rounded-lg font-medium transition-all text-sm
+        class="cursor-pointer px-5 py-2 rounded-lg font-medium transition-all text-sm
           {activeTab === 'list' 
             ? 'bg-blue-600 text-white shadow-md' 
             : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'}"
@@ -164,7 +207,7 @@
       </button>
       <button
         onclick={() => activeTab = 'stats'}
-        class="px-5 py-2 rounded-lg font-medium transition-all text-sm
+        class="cursor-pointer px-5 py-2 rounded-lg font-medium transition-all text-sm
           {activeTab === 'stats' 
             ? 'bg-blue-600 text-white shadow-md' 
             : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'}"
@@ -295,89 +338,49 @@
             </button>
           </div>
         {:else}
-          <div class="overflow-x-auto">
-            <table class="w-full">
-              <thead>
-                <tr class="border-b border-gray-200">
-                  <th class="text-left py-3 px-4 font-semibold text-gray-600">申请人</th>
-                  <th class="text-left py-3 px-4 font-semibold text-gray-600">加班日期时间</th>
-                  <th class="text-left py-3 px-4 font-semibold text-gray-600">加班时长</th>
-                  <th class="text-left py-3 px-4 font-semibold text-gray-600">加班事由</th>
-                  <th class="text-left py-3 px-4 font-semibold text-gray-600">提交时间</th>
-                  <th class="text-left py-3 px-4 font-semibold text-gray-600">状态</th>
-                  <th class="text-left py-3 px-4 font-semibold text-gray-600">操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                {#each filteredRecords as record (record.id)}
-                  <tr 
-                    class="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
-                    onclick={() => goto(`/record/${record.id}`)}
-                  >
-                    <td class="py-3 px-4">
-                      <span class="font-medium text-gray-800">{record.applicantName}</span>
-                    </td>
-                    <td class="py-3 px-4">
-                      <div class="text-sm text-gray-600">
-                        <div>开始: {formatDateTime(record.startTime)}</div>
-                        <div>结束: {formatDateTime(record.endTime)}</div>
-                      </div>
-                    </td>
-                    <td class="py-3 px-4">
-                      <span class="text-blue-600 font-medium">{formatDuration(record.duration)}</span>
-                    </td>
-                    <td class="py-3 px-4 max-w-xs">
-                      <p class="text-gray-600 text-sm truncate" title={record.reason}>
-                        {record.reason}
-                      </p>
-                    </td>
-                    <td class="py-3 px-4 text-sm text-gray-500">
-                      {formatDateTime(record.submitTime)}
-                    </td>
-                    <td class="py-3 px-4">
-                      <span class="px-3 py-1 rounded-full text-xs font-medium border {getStatusStyle(record.status)}">
-                        {getStatusText(record.status)}
-                      </span>
-                    </td>
-                    <td class="py-3 px-4" onclick={(e) => e.stopPropagation()}>
-                      <div class="flex items-center gap-2">
-                        {#if record.status === 'pending'}
-                          <button
-                            onclick={() => goto(`/record/${record.id}`)}
-                            class="px-2 py-1 text-xs text-blue-600 hover:text-white hover:bg-blue-600 border border-blue-600 rounded transition-colors"
-                          >
-                            审批
-                          </button>
-                        {:else if record.status === 'rejected'}
-                          <button
-                            onclick={() => handleEdit(record)}
-                            class="px-2 py-1 text-xs text-orange-600 hover:text-white hover:bg-orange-600 border border-orange-600 rounded transition-colors"
-                          >
-                            编辑
-                          </button>
-                        {:else}
-                          <button
-                            onclick={() => goto(`/record/${record.id}`)}
-                            class="px-2 py-1 text-xs text-gray-600 hover:text-white hover:bg-gray-600 border border-gray-600 rounded transition-colors"
-                          >
-                            查看
-                          </button>
-                        {/if}
-                        {#if record.status !== 'approved'}
-                          <button
-                            onclick={() => handleDeleteConfirm(record.id)}
-                            class="px-2 py-1 text-xs text-red-600 hover:text-white hover:bg-red-600 border border-red-600 rounded transition-colors"
-                          >
-                            删除
-                          </button>
-                        {/if}
-                      </div>
-                    </td>
-                  </tr>
-                {/each}
-              </tbody>
-            </table>
-          </div>
+          <!-- 单元格自定义渲染片段 -->
+          {#snippet dateRangeCell(record)}
+            <div class="text-sm text-gray-600">
+              <div>开始: {formatDateTime(record.startTime)}</div>
+              <div>结束: {formatDateTime(record.endTime)}</div>
+            </div>
+          {/snippet}
+
+          {#snippet durationCell(record)}
+            <span class="text-blue-600 font-medium">{formatDuration(record.duration)}</span>
+          {/snippet}
+
+          {#snippet reasonCell(record)}
+            <p class="text-gray-600 text-sm truncate" title={record.reason}>{record.reason}</p>
+          {/snippet}
+
+          {#snippet submitTimeCell(record)}
+            {formatDateTime(record.submitTime)}
+          {/snippet}
+
+          {#snippet statusCell(record)}
+            <span class="px-3 py-1 rounded-full text-xs font-medium border {getStatusStyle(record.status)}">
+              {getStatusText(record.status)}
+            </span>
+          {/snippet}
+
+          {@const columns: ColumnDef[] = [
+            { key: 'applicantName', title: '申请人', class: 'font-medium text-gray-800' },
+            { key: 'startTime', title: '加班日期时间', cell: dateRangeCell },
+            { key: 'duration', title: '加班时长', class: 'text-blue-600 font-medium', cell: durationCell },
+            { key: 'reason', title: '加班事由', class: 'max-w-xs', cell: reasonCell },
+            { key: 'submitTime', title: '提交时间', class: 'text-sm text-gray-500', cell: submitTimeCell },
+            { key: 'status', title: '状态', cell: statusCell }
+          ]}
+          <DynamicTable
+            rows={filteredRecords}
+            {columns}
+            rowKey={(record) => record.id}
+            onRowClick={(record) => goto(`/record/${record.id}`)}
+            {rowActions}
+            emptyText="没有符合条件的记录"
+            pagination={{ enabled: true, pageSize: 10, showInfo: true }}
+          />
         {/if}
       </div>
     {:else}

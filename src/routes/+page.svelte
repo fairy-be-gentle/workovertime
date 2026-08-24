@@ -1,0 +1,427 @@
+<script lang="ts">
+  import { enhance } from '$app/forms';
+  import { goto } from '$app/navigation';
+  import { formatDateTime, formatDuration, getStatusText, getStatusStyle } from '$lib/storage';
+  import Statistics from '$lib/components/Statistics.svelte';
+
+  // 从服务端加载的数据
+  interface Props {
+    data: {
+      records: OvertimeRecord[];
+      formFields: typeof import('$lib/storage').OVERTIME_FORM_FIELDS;
+    };
+    form?: {
+      success?: boolean;
+      action?: string;
+      error?: string;
+      field?: string;
+    };
+  }
+
+  let { data, form }: Props = $props();
+
+  // 当前标签页
+  let activeTab = $state<'list' | 'stats'>('list');
+
+  // 删除确认
+  let deleteId = $state<string | null>(null);
+
+  // 排序记录
+  let sortedRecords = $derived([...data.records].sort((a, b) =>
+    new Date(b.submitTime).getTime() - new Date(a.submitTime).getTime()
+  ));
+
+  // 筛选后的记录
+  let filteredRecords = $derived(sortedRecords.filter(record => {
+    // 关键字搜索（匹配申请人）
+    const keyword = searchKeyword.toLowerCase();
+    const matchKeyword = !keyword || 
+      record.applicantName.toLowerCase().includes(keyword);
+    
+    // 状态筛选
+    const matchStatus = filterStatus === 'all' || record.status === filterStatus;
+    
+    // 时间范围筛选（按提交时间）
+    let matchDate = true;
+    if (filterDateRange !== 'all') {
+      const submitDate = new Date(record.submitTime);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (filterDateRange === 'today') {
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        matchDate = submitDate >= today && submitDate < tomorrow;
+      } else if (filterDateRange === 'week') {
+        const weekAgo = new Date(today);
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        matchDate = submitDate >= weekAgo;
+      } else if (filterDateRange === 'month') {
+        const monthAgo = new Date(today);
+        monthAgo.setMonth(monthAgo.getMonth() - 1);
+        matchDate = submitDate >= monthAgo;
+      } else if (filterDateRange === 'quarter') {
+        const quarterAgo = new Date(today);
+        quarterAgo.setMonth(quarterAgo.getMonth() - 3);
+        matchDate = submitDate >= quarterAgo;
+      } else if (filterDateRange === 'year') {
+        const yearAgo = new Date(today);
+        yearAgo.setFullYear(yearAgo.getFullYear() - 1);
+        matchDate = submitDate >= yearAgo;
+      } else if (filterDateRange === 'custom') {
+        if (filterStartDate) {
+          const start = new Date(filterStartDate);
+          start.setHours(0, 0, 0, 0);
+          if (submitDate < start) matchDate = false;
+        }
+        if (filterEndDate) {
+          const end = new Date(filterEndDate);
+          end.setHours(23, 59, 59, 999);
+          if (submitDate > end) matchDate = false;
+        }
+      }
+    }
+    
+    return matchKeyword && matchStatus && matchDate;
+  }));
+
+  // 是否有筛选条件激活
+  let hasActiveFilter = $derived(
+    searchKeyword !== '' || filterStatus !== 'all' || filterDateRange !== 'all'
+  );
+
+  // 状态选项
+  const statusOptions = [
+    { value: 'all', label: '全部状态' },
+    { value: 'pending', label: '待审批' },
+    { value: 'approved', label: '已通过' },
+    { value: 'rejected', label: '已驳回' }
+  ];
+
+  // 时间范围选项
+  const dateRangeOptions = [
+    { value: 'all', label: '全部时间' },
+    { value: 'today', label: '今天' },
+    { value: 'week', label: '最近一周' },
+    { value: 'month', label: '最近一个月' },
+    { value: 'quarter', label: '最近三个月' },
+    { value: 'year', label: '最近一年' },
+    { value: 'custom', label: '自定义' }
+  ];
+
+  // 筛选状态
+  let searchKeyword = $state('');
+  let filterStatus = $state('all');
+  let filterDateRange = $state('all');
+  let filterStartDate = $state('');
+  let filterEndDate = $state('');
+
+  // 清除所有筛选
+  function clearFilters() {
+    searchKeyword = '';
+    filterStatus = 'all';
+    filterDateRange = 'all';
+    filterStartDate = '';
+    filterEndDate = '';
+  }
+
+  // 进入编辑页面（与新增共用 /new 页面）
+  function handleEdit(record: OvertimeRecord) {
+    goto(`/new?id=${record.id}`);
+  }
+
+  // 确认删除
+  function handleDeleteConfirm(id: string) {
+    deleteId = id;
+  }
+</script>
+
+<div class="max-w-7xl mx-auto">
+  <!-- 页面标题 -->
+  <div class="text-center mb-6">
+    <h1 class="text-3xl font-bold text-gray-800 mb-1">
+      加班申请系统
+    </h1>
+    <p class="text-gray-500 text-sm">管理您的加班申请流程</p>
+  </div>
+
+  <!-- 标签切换 -->
+  <div class="flex justify-center mb-4">
+    <div class="inline-flex bg-white rounded-xl shadow-md p-1">
+      <button
+        onclick={() => activeTab = 'list'}
+        class="px-5 py-2 rounded-lg font-medium transition-all text-sm
+          {activeTab === 'list' 
+            ? 'bg-blue-600 text-white shadow-md' 
+            : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'}"
+      >
+        申请列表
+        {#if data.records.length > 0}
+          <span class="ml-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">
+            {data.records.length}
+          </span>
+        {/if}
+      </button>
+      <button
+        onclick={() => activeTab = 'stats'}
+        class="px-5 py-2 rounded-lg font-medium transition-all text-sm
+          {activeTab === 'stats' 
+            ? 'bg-blue-600 text-white shadow-md' 
+            : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'}"
+      >
+        统计报表
+      </button>
+    </div>
+  </div>
+
+  <!-- 内容区域 -->
+  <div class="space-y-4">
+    {#if activeTab === 'list'}
+      <div class="bg-white rounded-xl shadow-lg p-6">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <span class="text-xl">📋</span>
+            申请列表
+            <span class="ml-2 px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
+              {filteredRecords.length} / {data.records.length} 条记录
+            </span>
+          </h2>
+          <button
+            onclick={() => goto('/new')}
+            class="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            新建申请
+          </button>
+        </div>
+
+        <!-- 搜索和筛选区域 -->
+        <div class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+            <!-- 搜索框 -->
+            <div class="md:col-span-4">
+              <label class="block text-xs text-gray-500 mb-1">姓名搜索</label>
+              <div class="relative">
+                <input
+                  type="text"
+                  bind:value={searchKeyword}
+                  placeholder="输入申请人姓名..."
+                  class="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+                <svg class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+            </div>
+
+            <!-- 状态筛选 -->
+            <div class="md:col-span-3">
+              <label class="block text-xs text-gray-500 mb-1">状态</label>
+              <select
+                bind:value={filterStatus}
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white"
+              >
+                {#each statusOptions as option}
+                  <option value={option.value}>{option.label}</option>
+                {/each}
+              </select>
+            </div>
+
+            <!-- 时间范围筛选 -->
+            <div class="md:col-span-3">
+              <label class="block text-xs text-gray-500 mb-1">提交时间</label>
+              <select
+                bind:value={filterDateRange}
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white"
+              >
+                {#each dateRangeOptions as option}
+                  <option value={option.value}>{option.label}</option>
+                {/each}
+              </select>
+            </div>
+
+            <!-- 清除按钮 -->
+            <div class="md:col-span-2 flex items-end">
+              {#if hasActiveFilter}
+                <button
+                  onclick={clearFilters}
+                  class="w-full px-3 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  清除筛选
+                </button>
+              {/if}
+            </div>
+          </div>
+
+          <!-- 自定义日期范围 -->
+          {#if filterDateRange === 'custom'}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 pt-3 border-t border-gray-200">
+              <div>
+                <label class="block text-xs text-gray-500 mb-1">开始日期</label>
+                <input
+                  type="date"
+                  bind:value={filterStartDate}
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                />
+              </div>
+              <div>
+                <label class="block text-xs text-gray-500 mb-1">结束日期</label>
+                <input
+                  type="date"
+                  bind:value={filterEndDate}
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                />
+              </div>
+            </div>
+          {/if}
+        </div>
+
+        {#if data.records.length === 0}
+          <div class="text-center py-12">
+            <p class="text-gray-500 text-lg">暂无加班申请记录</p>
+            <p class="text-gray-400 text-sm mt-2">点击上方按钮提交您的第一条加班申请</p>
+          </div>
+        {:else if filteredRecords.length === 0}
+          <div class="text-center py-12">
+            <p class="text-gray-500 text-lg">没有符合条件的记录</p>
+            <p class="text-gray-400 text-sm mt-2">请调整筛选条件后重试</p>
+            <button
+              onclick={clearFilters}
+              class="mt-3 px-4 py-2 text-sm text-blue-600 hover:text-blue-700"
+            >
+              清除筛选条件
+            </button>
+          </div>
+        {:else}
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="border-b border-gray-200">
+                  <th class="text-left py-3 px-4 font-semibold text-gray-600">申请人</th>
+                  <th class="text-left py-3 px-4 font-semibold text-gray-600">加班日期时间</th>
+                  <th class="text-left py-3 px-4 font-semibold text-gray-600">加班时长</th>
+                  <th class="text-left py-3 px-4 font-semibold text-gray-600">加班事由</th>
+                  <th class="text-left py-3 px-4 font-semibold text-gray-600">提交时间</th>
+                  <th class="text-left py-3 px-4 font-semibold text-gray-600">状态</th>
+                  <th class="text-left py-3 px-4 font-semibold text-gray-600">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {#each filteredRecords as record (record.id)}
+                  <tr 
+                    class="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+                    onclick={() => goto(`/record/${record.id}`)}
+                  >
+                    <td class="py-3 px-4">
+                      <span class="font-medium text-gray-800">{record.applicantName}</span>
+                    </td>
+                    <td class="py-3 px-4">
+                      <div class="text-sm text-gray-600">
+                        <div>开始: {formatDateTime(record.startTime)}</div>
+                        <div>结束: {formatDateTime(record.endTime)}</div>
+                      </div>
+                    </td>
+                    <td class="py-3 px-4">
+                      <span class="text-blue-600 font-medium">{formatDuration(record.duration)}</span>
+                    </td>
+                    <td class="py-3 px-4 max-w-xs">
+                      <p class="text-gray-600 text-sm truncate" title={record.reason}>
+                        {record.reason}
+                      </p>
+                    </td>
+                    <td class="py-3 px-4 text-sm text-gray-500">
+                      {formatDateTime(record.submitTime)}
+                    </td>
+                    <td class="py-3 px-4">
+                      <span class="px-3 py-1 rounded-full text-xs font-medium border {getStatusStyle(record.status)}">
+                        {getStatusText(record.status)}
+                      </span>
+                    </td>
+                    <td class="py-3 px-4" onclick={(e) => e.stopPropagation()}>
+                      <div class="flex items-center gap-2">
+                        {#if record.status === 'pending'}
+                          <button
+                            onclick={() => goto(`/record/${record.id}`)}
+                            class="px-2 py-1 text-xs text-blue-600 hover:text-white hover:bg-blue-600 border border-blue-600 rounded transition-colors"
+                          >
+                            审批
+                          </button>
+                        {:else if record.status === 'rejected'}
+                          <button
+                            onclick={() => handleEdit(record)}
+                            class="px-2 py-1 text-xs text-orange-600 hover:text-white hover:bg-orange-600 border border-orange-600 rounded transition-colors"
+                          >
+                            编辑
+                          </button>
+                        {:else}
+                          <button
+                            onclick={() => goto(`/record/${record.id}`)}
+                            class="px-2 py-1 text-xs text-gray-600 hover:text-white hover:bg-gray-600 border border-gray-600 rounded transition-colors"
+                          >
+                            查看
+                          </button>
+                        {/if}
+                        {#if record.status !== 'approved'}
+                          <button
+                            onclick={() => handleDeleteConfirm(record.id)}
+                            class="px-2 py-1 text-xs text-red-600 hover:text-white hover:bg-red-600 border border-red-600 rounded transition-colors"
+                          >
+                            删除
+                          </button>
+                        {/if}
+                      </div>
+                    </td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          </div>
+        {/if}
+      </div>
+    {:else}
+      <!-- 统计报表组件 -->
+      <Statistics records={data.records} />
+    {/if}
+  </div>
+</div>
+
+<!-- 删除确认弹窗 -->
+{#if deleteId}
+  <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6">
+      <div class="text-center">
+        <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-bold text-gray-800 mb-2">确认删除</h3>
+        <p class="text-gray-500 mb-6">确定要删除这条申请记录吗？此操作无法撤销。</p>
+        <div class="flex gap-3">
+          <button
+            onclick={() => deleteId = null}
+            class="flex-1 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-colors"
+          >
+            取消
+          </button>
+          <form method="POST" action="?/delete" use:enhance={() => {
+            return async ({ update }) => {
+              await update();
+              deleteId = null;
+            };
+          }} class="flex-1">
+            <input type="hidden" name="id" value={deleteId} />
+            <button
+              type="submit"
+              class="w-full py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors"
+            >
+              确认删除
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{/if}

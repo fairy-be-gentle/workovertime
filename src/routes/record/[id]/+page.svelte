@@ -97,7 +97,7 @@
     <div class="max-w-6xl mx-auto px-4 py-4">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-4">
-          <button onclick={goBack} class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+          <button onclick={goBack} class="cursor-pointer p-2 hover:bg-gray-100 rounded-lg transition-colors">
             <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
             </svg>

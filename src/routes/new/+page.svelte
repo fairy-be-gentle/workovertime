@@ -157,7 +157,7 @@
   <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
     <div class="max-w-4xl mx-auto px-4 py-4">
       <div class="flex items-center gap-4">
-        <button onclick={handleCancel} class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+        <button onclick={handleCancel} class="cursor-pointer p-2 hover:bg-gray-100 rounded-lg transition-colors">
           <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
           </svg>

@@ -1,7 +1,8 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
-  import { goto, invalidateAll } from '$app/navigation';
+  import { invalidateAll } from '$app/navigation';
   import { formatDateTime, formatDuration, getStatusText, getStatusStyle } from '$lib/storage';
+  import type { OvertimeRecord } from '$lib/storage';
   import Timeline from '$lib/components/Timeline.svelte';
 
   interface Props {
@@ -16,10 +17,10 @@
   }
 
   let { data, form }: Props = $props();
-  
+
   // 使用 $derived 来响应 data 变化
   let record = $derived(data.record);
-  
+
   // 审批/驳回弹窗
   let showActionDialog = $state(false);
   let actionType = $state<'approve' | 'reject' | null>(null);
@@ -42,7 +43,7 @@
 
   // 返回列表
   function goBack() {
-    goto('/');
+    history.back();
   }
 
   // 打开审批对话框
@@ -97,9 +98,22 @@
     <div class="max-w-6xl mx-auto px-4 py-4">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-4">
-          <button onclick={goBack} class="cursor-pointer p-2 hover:bg-gray-100 rounded-lg transition-colors">
-            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          <button
+            onclick={goBack}
+            class="cursor-pointer p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <svg
+              class="w-5 h-5 text-gray-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
           </button>
           <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2">
@@ -107,7 +121,7 @@
             申请详情
           </h1>
         </div>
-        
+
         <!-- 状态标签 -->
         <span class="px-3 py-1 rounded-full text-sm font-medium {getStatusStyle(record.status)}">
           {getStatusText(record.status)}
@@ -126,7 +140,7 @@
           <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
             <span>👤</span> 申请人信息
           </h2>
-          
+
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-sm text-gray-500 mb-1">申请人</label>
@@ -149,23 +163,9 @@
 
         <!-- 加班信息卡片 -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
-              <span>⏰</span> 加班信息
-            </h2>
-            <!-- 仅待审批或被驳回时可修改（与 form schema 的 readonlyWhenApproved 一致） -->
-            {#if record.status !== 'approved'}
-              <button
-                onclick={() => goto(`/new?id=${record.id}`)}
-                class="px-3 py-1.5 text-sm text-blue-600 hover:text-white hover:bg-blue-600 border border-blue-600 rounded-lg transition-colors flex items-center gap-1"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                修改加班时间
-              </button>
-            {/if}
-          </div>
+          <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
+            <span>⏰</span> 加班信息
+          </h2>
 
           <div class="grid grid-cols-2 gap-4">
             <div>
@@ -178,7 +178,9 @@
             </div>
             <div>
               <label class="block text-sm text-gray-500 mb-1">加班时长</label>
-              <p class="text-gray-800 font-medium text-blue-600">{formatDuration(calculatedDuration)}</p>
+              <p class="text-gray-800 font-medium text-blue-600">
+                {formatDuration(calculatedDuration)}
+              </p>
             </div>
           </div>
         </div>
@@ -188,7 +190,7 @@
           <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
             <span>📝</span> 加班事由
           </h2>
-          
+
           <div class="bg-gray-50 rounded-lg p-4">
             <p class="text-gray-700 whitespace-pre-wrap">{record.reason}</p>
           </div>
@@ -197,10 +199,7 @@
 
       <!-- 右侧：时间轴 -->
       <div class="space-y-6">
-        <Timeline 
-          steps={record.workflowHistory || []} 
-          currentStatus={record.status}
-        />
+        <Timeline steps={record.workflowHistory || []} currentStatus={record.status} />
       </div>
     </div>
   </main>
@@ -209,8 +208,8 @@
   {#if record.status === 'pending'}
     <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg p-4 z-20">
       <div class="max-w-6xl mx-auto flex gap-3">
-        <form 
-          method="POST" 
+        <form
+          method="POST"
           action="?/approve"
           use:enhance={() => {
             return async ({ result, update }) => {
@@ -233,9 +232,9 @@
             <span>✅</span> 批准
           </button>
         </form>
-        
-        <form 
-          method="POST" 
+
+        <form
+          method="POST"
           action="?/reject"
           use:enhance={() => {
             return async ({ result, update }) => {

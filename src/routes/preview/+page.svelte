@@ -15,7 +15,7 @@
     position: '',
     startTime: '',
     endTime: '',
-    reason: ''
+    reason: '',
   });
 
   let duration = $derived(calculateDuration(formData.startTime, formData.endTime));
@@ -82,8 +82,15 @@
       form.appendChild(idInput);
     }
 
-    const fields: (keyof OvertimeFormData)[] = ['applicantName', 'department', 'position', 'startTime', 'endTime', 'reason'];
-    fields.forEach(key => {
+    const fields: (keyof OvertimeFormData)[] = [
+      'applicantName',
+      'department',
+      'position',
+      'startTime',
+      'endTime',
+      'reason',
+    ];
+    fields.forEach((key) => {
       const input = document.createElement('input');
       input.type = 'hidden';
       input.name = key;
@@ -106,9 +113,17 @@
   <header class="bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-200 sticky top-0 z-10">
     <div class="max-w-2xl mx-auto px-4 py-4">
       <div class="flex items-center gap-4">
-        <button onclick={goBack} class="cursor-pointer p-2 hover:bg-gray-100 rounded-lg transition-colors">
+        <button
+          onclick={goBack}
+          class="cursor-pointer p-2 hover:bg-gray-100 rounded-lg transition-colors"
+        >
           <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 19l-7-7 7-7"
+            />
           </svg>
         </button>
         <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2">
@@ -124,7 +139,12 @@
     <div class="max-w-2xl mx-auto px-4 py-3">
       <p class="text-amber-700 text-sm flex items-center gap-2">
         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
         </svg>
         请确认以下信息，点击字段可返回修改
       </p>
@@ -134,17 +154,22 @@
   <!-- 主内容 -->
   <main class="max-w-2xl mx-auto px-4 py-6 space-y-4">
     <!-- 申请人 -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
-      <h3 class="text-sm text-gray-500 mb-1 flex items-center gap-2">
-        申请人
-      </h3>
+    <div
+      class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow"
+    >
+      <h3 class="text-sm text-gray-500 mb-1 flex items-center gap-2">申请人</h3>
       <p class="text-xl font-semibold text-gray-800">{formData.applicantName}</p>
-      <button 
+      <button
         onclick={() => scrollToField('applicantName')}
-        class="mt-3 text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 transition-colors"
+        class="mt-3 text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 transition-colors cursor-pointer"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+          />
         </svg>
         修改
       </button>
@@ -152,33 +177,43 @@
 
     <!-- 部门和职位 -->
     <div class="grid grid-cols-2 gap-4">
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow">
-        <h3 class="text-sm text-gray-500 mb-1 flex items-center gap-2">
-          部门
-        </h3>
+      <div
+        class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow"
+      >
+        <h3 class="text-sm text-gray-500 mb-1 flex items-center gap-2">部门</h3>
         <p class="font-medium text-gray-800">{formData.department || '未填写'}</p>
-        <button 
+        <button
           onclick={() => scrollToField('department')}
-          class="mt-3 text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 transition-colors"
+          class="mt-3 text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 transition-colors cursor-pointer"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+            />
           </svg>
           修改
         </button>
       </div>
 
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow">
-        <h3 class="text-sm text-gray-500 mb-1 flex items-center gap-2">
-          职位
-        </h3>
+      <div
+        class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow"
+      >
+        <h3 class="text-sm text-gray-500 mb-1 flex items-center gap-2">职位</h3>
         <p class="font-medium text-gray-800">{formData.position || '未填写'}</p>
-        <button 
+        <button
           onclick={() => scrollToField('position')}
-          class="mt-3 text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 transition-colors"
+          class="mt-3 text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 transition-colors cursor-pointer"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+            />
           </svg>
           修改
         </button>
@@ -186,10 +221,10 @@
     </div>
 
     <!-- 加班时间 -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
-      <h3 class="text-sm text-gray-500 mb-3 flex items-center gap-2">
-        加班时间
-      </h3>
+    <div
+      class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow"
+    >
+      <h3 class="text-sm text-gray-500 mb-3 flex items-center gap-2">加班时间</h3>
       <div class="grid grid-cols-2 gap-4">
         <div>
           <p class="text-xs text-gray-400 mb-1">开始时间</p>
@@ -200,12 +235,17 @@
           <p class="font-medium text-gray-800">{formatDateTime(formData.endTime)}</p>
         </div>
       </div>
-      <button 
+      <button
         onclick={() => scrollToField('startTime')}
-        class="mt-4 text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 transition-colors"
+        class="mt-4 text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 transition-colors cursor-pointer"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+          />
         </svg>
         修改时间
       </button>
@@ -213,26 +253,31 @@
 
     <!-- 加班时长 -->
     {#if duration > 0}
-      <div class="bg-gradient-to-r from-green-50 to-teal-50 rounded-2xl p-6 border border-green-100">
-        <h3 class="text-sm text-green-600 mb-2 flex items-center gap-2 font-medium">
-          加班时长
-        </h3>
+      <div
+        class="bg-gradient-to-r from-green-50 to-teal-50 rounded-2xl p-6 border border-green-100"
+      >
+        <h3 class="text-sm text-green-600 mb-2 flex items-center gap-2 font-medium">加班时长</h3>
         <p class="text-3xl font-bold text-green-700">{formatDuration(duration)}</p>
       </div>
     {/if}
 
     <!-- 加班事由 -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
-      <h3 class="text-sm text-gray-500 mb-2 flex items-center gap-2">
-        加班事由
-      </h3>
+    <div
+      class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow"
+    >
+      <h3 class="text-sm text-gray-500 mb-2 flex items-center gap-2">加班事由</h3>
       <p class="text-gray-800 leading-relaxed whitespace-pre-wrap">{formData.reason}</p>
-      <button 
+      <button
         onclick={() => scrollToField('reason')}
-        class="mt-4 text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 transition-colors"
+        class="mt-4 text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 transition-colors cursor-pointer"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+          />
         </svg>
         修改事由
       </button>
@@ -240,23 +285,35 @@
   </main>
 
   <!-- 底部操作栏 -->
-  <div class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 p-4">
+  <div
+    class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 p-4"
+  >
     <div class="max-w-2xl mx-auto flex gap-3">
       <button
         onclick={goBack}
-        class="flex-1 py-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
+        class="flex-1 py-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+          />
         </svg>
         返回修改
       </button>
       <button
         onclick={handleConfirm}
-        class="flex-1 py-4 bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white font-medium rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-500/30"
+        class="flex-1 py-4 bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white font-medium rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-500/30 cursor-pointer"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M5 13l4 4L19 7"
+          />
         </svg>
         确认提交
       </button>

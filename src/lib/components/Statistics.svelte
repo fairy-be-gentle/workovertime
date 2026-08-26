@@ -17,24 +17,30 @@
   let pieChart: echarts.ECharts | null = null;
   let isMounted = $state(false);
 
+  // ECharts tooltip 参数类型
+  interface TooltipParams {
+    name: string;
+    value: number;
+  }
+
   // 计算统计数据
   let statistics = $derived.by<StatisticsData>(() => {
     const total = records.length;
-    const pending = records.filter(r => r.status === 'pending').length;
-    const approved = records.filter(r => r.status === 'approved').length;
-    const rejected = records.filter(r => r.status === 'rejected').length;
+    const pending = records.filter((r) => r.status === 'pending').length;
+    const approved = records.filter((r) => r.status === 'approved').length;
+    const rejected = records.filter((r) => r.status === 'rejected').length;
     const totalHours = records.reduce((sum, r) => sum + r.duration, 0);
     const avgHours = total > 0 ? totalHours / total : 0;
 
     // 按月份统计
     const monthMap = new Map<string, { count: number; hours: number }>();
-    records.forEach(r => {
+    records.forEach((r) => {
       const date = new Date(r.submitTime);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       const existing = monthMap.get(monthKey) || { count: 0, hours: 0 };
       monthMap.set(monthKey, {
         count: existing.count + 1,
-        hours: existing.hours + r.duration
+        hours: existing.hours + r.duration,
       });
     });
     const byMonth = Array.from(monthMap.entries())
@@ -43,16 +49,39 @@
 
     // 按状态分布
     const byStatus = [
-      { status: 'pending' as const, count: pending, percentage: total > 0 ? (pending / total) * 100 : 0 },
-      { status: 'approved' as const, count: approved, percentage: total > 0 ? (approved / total) * 100 : 0 },
-      { status: 'rejected' as const, count: rejected, percentage: total > 0 ? (rejected / total) * 100 : 0 }
+      {
+        status: 'pending' as const,
+        count: pending,
+        percentage: total > 0 ? (pending / total) * 100 : 0,
+      },
+      {
+        status: 'approved' as const,
+        count: approved,
+        percentage: total > 0 ? (approved / total) * 100 : 0,
+      },
+      {
+        status: 'rejected' as const,
+        count: rejected,
+        percentage: total > 0 ? (rejected / total) * 100 : 0,
+      },
     ];
 
-    return { total, pending, approved, rejected, totalHours, avgHours, byMonth, byStatus };
+    return {
+      total,
+      pending,
+      approved,
+      rejected,
+      totalHours,
+      avgHours,
+      byMonth,
+      byStatus,
+    };
   });
 
-  function initCharts() {
-    if (!barChartContainer || !pieChartContainer || typeof window === 'undefined') return;
+  function initCharts(): void {
+    if (!barChartContainer || !pieChartContainer || typeof window === 'undefined') {
+      return;
+    }
 
     // 柱状图配置
     barChart = echarts.init(barChartContainer);
@@ -60,53 +89,53 @@
       title: {
         text: '月度加班统计',
         left: 'center',
-        textStyle: { fontSize: 16, fontWeight: 'bold' }
+        textStyle: { fontSize: 16, fontWeight: 'bold' },
       },
       tooltip: {
         trigger: 'axis',
-        formatter: (params: any) => {
+        formatter: (params: TooltipParams[]) => {
           const month = params[0].name;
           const count = params[0].value;
           const hours = params[1]?.value || 0;
           return `${month}<br/>申请次数: ${count} 次<br/>加班时长: ${formatDuration(hours)}`;
-        }
+        },
       },
       legend: {
         data: ['申请次数', '加班时长'],
-        bottom: 0
+        bottom: 0,
       },
       xAxis: {
         type: 'category',
-        data: statistics.byMonth.map(m => m.month)
+        data: statistics.byMonth.map((m) => m.month),
       },
       yAxis: [
         {
           type: 'value',
           name: '次数',
-          position: 'left'
+          position: 'left',
         },
         {
           type: 'value',
           name: '时长(小时)',
-          position: 'right'
-        }
+          position: 'right',
+        },
       ],
       series: [
         {
           name: '申请次数',
           type: 'bar',
-          data: statistics.byMonth.map(m => m.count),
-          itemStyle: { color: '#3b82f6' }
+          data: statistics.byMonth.map((m) => m.count),
+          itemStyle: { color: '#3b82f6' },
         },
         {
           name: '加班时长',
           type: 'line',
           yAxisIndex: 1,
-          data: statistics.byMonth.map(m => m.hours),
+          data: statistics.byMonth.map((m) => m.hours),
           itemStyle: { color: '#10b981' },
-          smooth: true
-        }
-      ]
+          smooth: true,
+        },
+      ],
     };
     barChart.setOption(barOption);
 
@@ -116,16 +145,16 @@
       title: {
         text: '申请状态分布',
         left: 'center',
-        textStyle: { fontSize: 16, fontWeight: 'bold' }
+        textStyle: { fontSize: 16, fontWeight: 'bold' },
       },
       tooltip: {
         trigger: 'item',
-        formatter: '{b}: {c} ({d}%)'
+        formatter: '{b}: {c} ({d}%)',
       },
       legend: {
         orient: 'vertical',
         right: 10,
-        top: 'center'
+        top: 'center',
       },
       series: [
         {
@@ -133,20 +162,32 @@
           radius: ['40%', '70%'],
           center: ['40%', '50%'],
           label: {
-            formatter: '{b}\n{d}%'
+            formatter: '{b}\n{d}%',
           },
           data: [
-            { value: statistics.pending, name: '待审批', itemStyle: { color: '#facc15' } },
-            { value: statistics.approved, name: '已通过', itemStyle: { color: '#22c55e' } },
-            { value: statistics.rejected, name: '已驳回', itemStyle: { color: '#ef4444' } }
-          ]
-        }
-      ]
+            {
+              value: statistics.pending,
+              name: '待审批',
+              itemStyle: { color: '#facc15' },
+            },
+            {
+              value: statistics.approved,
+              name: '已通过',
+              itemStyle: { color: '#22c55e' },
+            },
+            {
+              value: statistics.rejected,
+              name: '已驳回',
+              itemStyle: { color: '#ef4444' },
+            },
+          ],
+        },
+      ],
     };
     pieChart.setOption(pieOption);
 
     // 响应式调整
-    const handleResize = () => {
+    const handleResize = (): void => {
       barChart?.resize();
       pieChart?.resize();
     };

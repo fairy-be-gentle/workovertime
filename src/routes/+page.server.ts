@@ -8,9 +8,9 @@ import {
   loadApplicationsFromFile,
   saveApplicationsToFile,
   generateId,
-  calculateDuration
+  calculateDuration,
 } from '$lib/server/storage';
-import { OVERTIME_FORM_FIELDS, validateFormData } from '$lib/storage';
+import { OVERTIME_FORM_SCHEMA, validateFormData } from '$lib/form-schema';
 
 /**
  * 从 FormData 解析并校验申请表单字段。
@@ -40,9 +40,9 @@ function parseApplicationForm(formData: FormData): ParsedApplicationForm {
     position: formData.get('position')?.toString() ?? '',
     startTime: formData.get('startTime')?.toString() ?? '',
     endTime: formData.get('endTime')?.toString() ?? '',
-    reason: formData.get('reason')?.toString() ?? ''
+    reason: formData.get('reason')?.toString() ?? '',
   };
-  const errors = validateFormData(raw, OVERTIME_FORM_FIELDS);
+  const errors = validateFormData(raw, OVERTIME_FORM_SCHEMA);
   return {
     values: {
       applicantName: raw.applicantName.trim(),
@@ -50,9 +50,9 @@ function parseApplicationForm(formData: FormData): ParsedApplicationForm {
       position: raw.position,
       startTime: raw.startTime,
       endTime: raw.endTime,
-      reason: raw.reason.trim()
+      reason: raw.reason.trim(),
     },
-    errors
+    errors,
   };
 }
 
@@ -63,7 +63,7 @@ export const load: PageServerLoad = () => {
   const records = loadApplicationsFromFile();
   return {
     records,
-    formFields: OVERTIME_FORM_FIELDS
+    formFields: OVERTIME_FORM_SCHEMA,
   };
 };
 
@@ -74,10 +74,23 @@ export const actions: Actions = {
     const formData = await request.formData();
     const { values, errors } = parseApplicationForm(formData);
 
-    if (errors.applicantName || errors.department || errors.position ||
-        errors.startTime || errors.endTime || errors.reason) {
+    if (
+      errors.applicantName ||
+      errors.department ||
+      errors.position ||
+      errors.startTime ||
+      errors.endTime ||
+      errors.reason
+    ) {
       // 优先返回第一个字段级错误，便于前端高亮定位
-      const fieldOrder = ['applicantName', 'department', 'position', 'startTime', 'endTime', 'reason'] as const;
+      const fieldOrder = [
+        'applicantName',
+        'department',
+        'position',
+        'startTime',
+        'endTime',
+        'reason',
+      ] as const;
       for (const field of fieldOrder) {
         if (errors[field]) {
           return fail(400, { error: errors[field], field });
@@ -107,9 +120,9 @@ export const actions: Actions = {
           status: 'completed' as const,
           operator: values.applicantName,
           operateTime: now,
-          stepName: '提交申请'
-        }
-      ]
+          stepName: '提交申请',
+        },
+      ],
     };
 
     records.unshift(newRecord);
@@ -128,9 +141,22 @@ export const actions: Actions = {
     }
 
     const { values, errors } = parseApplicationForm(formData);
-    if (errors.applicantName || errors.department || errors.position ||
-        errors.startTime || errors.endTime || errors.reason) {
-      const fieldOrder = ['applicantName', 'department', 'position', 'startTime', 'endTime', 'reason'] as const;
+    if (
+      errors.applicantName ||
+      errors.department ||
+      errors.position ||
+      errors.startTime ||
+      errors.endTime ||
+      errors.reason
+    ) {
+      const fieldOrder = [
+        'applicantName',
+        'department',
+        'position',
+        'startTime',
+        'endTime',
+        'reason',
+      ] as const;
       for (const field of fieldOrder) {
         if (errors[field]) {
           return fail(400, { error: errors[field], field });
@@ -139,7 +165,7 @@ export const actions: Actions = {
     }
 
     const records = loadApplicationsFromFile();
-    const index = records.findIndex(r => r.id === id);
+    const index = records.findIndex((r) => r.id === id);
 
     if (index === -1) {
       return fail(404, { error: '记录不存在' });
@@ -150,9 +176,7 @@ export const actions: Actions = {
     const previousStatus = existing.status;
 
     // 已驳回的记录重新编辑后，状态回到待审批并追加工作流记录
-    const workflowHistory = existing.workflowHistory
-      ? [...existing.workflowHistory]
-      : [];
+    const workflowHistory = existing.workflowHistory ? [...existing.workflowHistory] : [];
     if (previousStatus === 'rejected') {
       workflowHistory.push({
         id: generateId(),
@@ -160,7 +184,7 @@ export const actions: Actions = {
         status: 'completed' as const,
         operator: values.applicantName,
         operateTime: now,
-        stepName: '重新提交申请'
+        stepName: '重新提交申请',
       });
     }
 
@@ -175,7 +199,7 @@ export const actions: Actions = {
       duration: calculateDuration(values.startTime, values.endTime),
       reason: values.reason,
       status: previousStatus === 'rejected' ? 'pending' : existing.status,
-      workflowHistory
+      workflowHistory,
     };
 
     saveApplicationsToFile(records);
@@ -193,7 +217,7 @@ export const actions: Actions = {
     }
 
     const records = loadApplicationsFromFile();
-    const filteredRecords = records.filter(r => r.id !== id);
+    const filteredRecords = records.filter((r) => r.id !== id);
 
     if (filteredRecords.length === records.length) {
       return fail(404, { error: '记录不存在' });
@@ -202,5 +226,5 @@ export const actions: Actions = {
     saveApplicationsToFile(filteredRecords);
 
     return { success: true, action: 'delete' };
-  }
+  },
 };

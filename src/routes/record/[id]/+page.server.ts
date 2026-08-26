@@ -4,15 +4,15 @@ import { loadApplicationsFromFile, saveApplicationsToFile, generateId } from '$l
 
 export const load: PageServerLoad = async ({ params }) => {
   const records = loadApplicationsFromFile();
-  
-  const record = records.find(r => r.id === params.id);
-  
+
+  const record = records.find((r) => r.id === params.id);
+
   if (!record) {
     throw error(404, '申请记录不存在');
   }
 
   return {
-    record
+    record,
   };
 };
 
@@ -28,8 +28,8 @@ export const actions: Actions = {
     }
 
     const records = loadApplicationsFromFile();
-    
-    const recordIndex = records.findIndex(r => r.id === id);
+
+    const recordIndex = records.findIndex((r) => r.id === id);
     if (recordIndex === -1) {
       return fail(404, { error: '申请记录不存在' });
     }
@@ -40,7 +40,7 @@ export const actions: Actions = {
     }
 
     const now = new Date().toISOString();
-    
+
     // 添加审批记录到工作流历史
     const workflowStep = {
       id: generateId(),
@@ -49,14 +49,14 @@ export const actions: Actions = {
       operator,
       operateTime: now,
       comment,
-      stepName: '审批通过'
+      stepName: '审批通过',
     };
 
     // 更新记录
     records[recordIndex] = {
       ...record,
       status: 'approved' as const,
-      workflowHistory: [...(record.workflowHistory || []), workflowStep]
+      workflowHistory: [...(record.workflowHistory || []), workflowStep],
     };
 
     saveApplicationsToFile(records);
@@ -75,8 +75,8 @@ export const actions: Actions = {
     }
 
     const records = loadApplicationsFromFile();
-    
-    const recordIndex = records.findIndex(r => r.id === id);
+
+    const recordIndex = records.findIndex((r) => r.id === id);
     if (recordIndex === -1) {
       return fail(404, { error: '申请记录不存在' });
     }
@@ -87,7 +87,7 @@ export const actions: Actions = {
     }
 
     const now = new Date().toISOString();
-    
+
     // 添加驳回记录到工作流历史
     const workflowStep = {
       id: generateId(),
@@ -96,18 +96,18 @@ export const actions: Actions = {
       operator,
       operateTime: now,
       comment,
-      stepName: '审批驳回'
+      stepName: '审批驳回',
     };
 
     // 更新记录
     records[recordIndex] = {
       ...record,
       status: 'rejected' as const,
-      workflowHistory: [...(record.workflowHistory || []), workflowStep]
+      workflowHistory: [...(record.workflowHistory || []), workflowStep],
     };
 
     saveApplicationsToFile(records);
 
     return { success: true, action: 'reject' };
-  }
+  },
 };

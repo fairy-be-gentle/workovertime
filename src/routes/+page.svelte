@@ -29,63 +29,66 @@
   let deleteId = $state<string | null>(null);
 
   // 排序记录
-  let sortedRecords = $derived([...data.records].sort((a, b) =>
-    new Date(b.submitTime).getTime() - new Date(a.submitTime).getTime()
-  ));
+  let sortedRecords = $derived(
+    [...data.records].sort(
+      (a, b) => new Date(b.submitTime).getTime() - new Date(a.submitTime).getTime(),
+    ),
+  );
 
   // 筛选后的记录
-  let filteredRecords = $derived(sortedRecords.filter(record => {
-    // 关键字搜索（匹配申请人）
-    const keyword = searchKeyword.toLowerCase();
-    const matchKeyword = !keyword ||
-      record.applicantName.toLowerCase().includes(keyword);
+  let filteredRecords = $derived(
+    sortedRecords.filter((record) => {
+      // 关键字搜索（匹配申请人）
+      const keyword = searchKeyword.toLowerCase();
+      const matchKeyword = !keyword || record.applicantName.toLowerCase().includes(keyword);
 
-    // 状态筛选
-    const matchStatus = filterStatus === 'all' || record.status === filterStatus;
+      // 状态筛选
+      const matchStatus = filterStatus === 'all' || record.status === filterStatus;
 
-    // 时间范围筛选（按提交时间）
-    let matchDate = true;
-    if (filterDateRange !== 'all') {
-      const submitDate = new Date(record.submitTime);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      // 时间范围筛选（按提交时间）
+      let matchDate = true;
+      if (filterDateRange !== 'all') {
+        const submitDate = new Date(record.submitTime);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
-      if (filterDateRange === 'today') {
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        matchDate = submitDate >= today && submitDate < tomorrow;
-      } else if (filterDateRange === 'week') {
-        const weekAgo = new Date(today);
-        weekAgo.setDate(weekAgo.getDate() - 7);
-        matchDate = submitDate >= weekAgo;
-      } else if (filterDateRange === 'month') {
-        const monthAgo = new Date(today);
-        monthAgo.setMonth(monthAgo.getMonth() - 1);
-        matchDate = submitDate >= monthAgo;
-      } else if (filterDateRange === 'quarter') {
-        const quarterAgo = new Date(today);
-        quarterAgo.setMonth(quarterAgo.getMonth() - 3);
-        matchDate = submitDate >= quarterAgo;
-      } else if (filterDateRange === 'year') {
-        const yearAgo = new Date(today);
-        yearAgo.setFullYear(yearAgo.getFullYear() - 1);
-        matchDate = submitDate >= yearAgo;
-      } else if (filterDateRange === 'custom') {
-        if (filterStartDate) {
-          const start = new Date(filterStartDate);
-          start.setHours(0, 0, 0, 0);
-          if (submitDate < start) matchDate = false;
-        }
-        if (filterEndDate) {
-          const end = new Date(filterEndDate);
-          end.setHours(23, 59, 59, 999);
-          if (submitDate > end) matchDate = false;
+        if (filterDateRange === 'today') {
+          const tomorrow = new Date(today);
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          matchDate = submitDate >= today && submitDate < tomorrow;
+        } else if (filterDateRange === 'week') {
+          const weekAgo = new Date(today);
+          weekAgo.setDate(weekAgo.getDate() - 7);
+          matchDate = submitDate >= weekAgo;
+        } else if (filterDateRange === 'month') {
+          const monthAgo = new Date(today);
+          monthAgo.setMonth(monthAgo.getMonth() - 1);
+          matchDate = submitDate >= monthAgo;
+        } else if (filterDateRange === 'quarter') {
+          const quarterAgo = new Date(today);
+          quarterAgo.setMonth(quarterAgo.getMonth() - 3);
+          matchDate = submitDate >= quarterAgo;
+        } else if (filterDateRange === 'year') {
+          const yearAgo = new Date(today);
+          yearAgo.setFullYear(yearAgo.getFullYear() - 1);
+          matchDate = submitDate >= yearAgo;
+        } else if (filterDateRange === 'custom') {
+          if (filterStartDate) {
+            const start = new Date(filterStartDate);
+            start.setHours(0, 0, 0, 0);
+            if (submitDate < start) matchDate = false;
+          }
+          if (filterEndDate) {
+            const end = new Date(filterEndDate);
+            end.setHours(23, 59, 59, 999);
+            if (submitDate > end) matchDate = false;
+          }
         }
       }
-    }
 
-    return matchKeyword && matchStatus && matchDate;
-  }));
+      return matchKeyword && matchStatus && matchDate;
+    }),
+  );
 
   // ---- 行内操作按钮 ----
   const rowActions: RowAction[] = [
@@ -93,29 +96,32 @@
       key: 'primary',
       show: (record) => record.status === 'pending',
       label: '审批',
-      onclick: (record) => goto(`/record/${record.id}`)
+      onclick: (record) => goto(`/record/${record.id}`),
     },
     {
       key: 'edit',
       show: (record) => record.status === 'rejected',
       label: '编辑',
-      class: 'px-2 py-1 text-xs text-orange-600 hover:text-white hover:bg-orange-600 border border-orange-600 rounded transition-colors',
-      onclick: (record) => handleEdit(record)
+      class:
+        'px-2 py-1 text-xs text-orange-600 hover:text-white hover:bg-orange-600 border border-orange-600 rounded transition-colors',
+      onclick: (record) => handleEdit(record),
     },
     {
       key: 'view',
       show: (record) => record.status !== 'pending' && record.status !== 'rejected',
       label: '查看',
-      class: 'px-2 py-1 text-xs text-gray-600 hover:text-white hover:bg-gray-600 border border-gray-600 rounded transition-colors',
-      onclick: (record) => goto(`/record/${record.id}`)
+      class:
+        'px-2 py-1 text-xs text-gray-600 hover:text-white hover:bg-gray-600 border border-gray-600 rounded transition-colors',
+      onclick: (record) => goto(`/record/${record.id}`),
     },
     {
       key: 'delete',
       show: (record) => record.status !== 'approved',
       label: '删除',
-      class: 'px-2 py-1 text-xs text-red-600 hover:text-white hover:bg-red-600 border border-red-600 rounded transition-colors',
-      onclick: (record) => handleDeleteConfirm(record.id)
-    }
+      class:
+        'px-2 py-1 text-xs text-red-600 hover:text-white hover:bg-red-600 border border-red-600 rounded transition-colors',
+      onclick: (record) => handleDeleteConfirm(record.id),
+    },
   ];
 
   // ---- 分页 ----
@@ -124,13 +130,17 @@
   // 筛选条件变化时回到第一页
   $effect(() => {
     // 读取筛选条件以建立依赖
-    searchKeyword; filterStatus; filterDateRange; filterStartDate; filterEndDate;
+    searchKeyword;
+    filterStatus;
+    filterDateRange;
+    filterStartDate;
+    filterEndDate;
     currentPage = 1;
   });
 
   // 是否有筛选条件激活
   let hasActiveFilter = $derived(
-    searchKeyword !== '' || filterStatus !== 'all' || filterDateRange !== 'all'
+    searchKeyword !== '' || filterStatus !== 'all' || filterDateRange !== 'all',
   );
 
   // 状态选项
@@ -138,7 +148,7 @@
     { value: 'all', label: '全部状态' },
     { value: 'pending', label: '待审批' },
     { value: 'approved', label: '已通过' },
-    { value: 'rejected', label: '已驳回' }
+    { value: 'rejected', label: '已驳回' },
   ];
 
   // 时间范围选项
@@ -149,7 +159,7 @@
     { value: 'month', label: '最近一个月' },
     { value: 'quarter', label: '最近三个月' },
     { value: 'year', label: '最近一年' },
-    { value: 'custom', label: '自定义' }
+    { value: 'custom', label: '自定义' },
   ];
 
   // 筛选状态
@@ -182,9 +192,7 @@
 <div class="max-w-7xl mx-auto">
   <!-- 页面标题 -->
   <div class="text-center mb-6">
-    <h1 class="text-3xl font-bold text-gray-800 mb-1">
-      加班申请系统
-    </h1>
+    <h1 class="text-3xl font-bold text-gray-800 mb-1">加班申请系统</h1>
     <p class="text-gray-500 text-sm">管理您的加班申请流程</p>
   </div>
 
@@ -192,11 +200,11 @@
   <div class="flex justify-center mb-4">
     <div class="inline-flex bg-white rounded-xl shadow-md p-1">
       <button
-        onclick={() => activeTab = 'list'}
+        onclick={() => (activeTab = 'list')}
         class="cursor-pointer px-5 py-2 rounded-lg font-medium transition-all text-sm
-          {activeTab === 'list' 
-            ? 'bg-blue-600 text-white shadow-md' 
-            : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'}"
+          {activeTab === 'list'
+          ? 'bg-blue-600 text-white shadow-md'
+          : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'}"
       >
         申请列表
         {#if data.records.length > 0}
@@ -206,11 +214,11 @@
         {/if}
       </button>
       <button
-        onclick={() => activeTab = 'stats'}
+        onclick={() => (activeTab = 'stats')}
         class="cursor-pointer px-5 py-2 rounded-lg font-medium transition-all text-sm
-          {activeTab === 'stats' 
-            ? 'bg-blue-600 text-white shadow-md' 
-            : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'}"
+          {activeTab === 'stats'
+          ? 'bg-blue-600 text-white shadow-md'
+          : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'}"
       >
         统计报表
       </button>
@@ -234,7 +242,12 @@
             class="cursor-pointer px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 4v16m8-8H4"
+              />
             </svg>
             新建申请
           </button>
@@ -253,8 +266,18 @@
                   placeholder="输入申请人姓名..."
                   class="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 />
-                <svg class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                <svg
+                  class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
                 </svg>
               </div>
             </div>
@@ -359,7 +382,11 @@
           {/snippet}
 
           {#snippet statusCell(record)}
-            <span class="px-3 py-1 rounded-full text-xs font-medium border {getStatusStyle(record.status)}">
+            <span
+              class="px-3 py-1 rounded-full text-xs font-medium border {getStatusStyle(
+                record.status,
+              )}"
+            >
               {getStatusText(record.status)}
             </span>
           {/snippet}
@@ -395,26 +422,38 @@
   <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
     <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6">
       <div class="text-center">
-        <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <div
+          class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4"
+        >
           <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
           </svg>
         </div>
         <h3 class="text-lg font-bold text-gray-800 mb-2">确认删除</h3>
         <p class="text-gray-500 mb-6">确定要删除这条申请记录吗？此操作无法撤销。</p>
         <div class="flex gap-3">
           <button
-            onclick={() => deleteId = null}
+            onclick={() => (deleteId = null)}
             class="flex-1 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-colors"
           >
             取消
           </button>
-          <form method="POST" action="?/delete" use:enhance={() => {
-            return async ({ update }) => {
-              await update();
-              deleteId = null;
-            };
-          }} class="flex-1">
+          <form
+            method="POST"
+            action="?/delete"
+            use:enhance={() => {
+              return async ({ update }) => {
+                await update();
+                deleteId = null;
+              };
+            }}
+            class="flex-1"
+          >
             <input type="hidden" name="id" value={deleteId} />
             <button
               type="submit"

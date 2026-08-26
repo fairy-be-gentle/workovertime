@@ -20,7 +20,7 @@
     /** 分页配置；不传等同于 { enabled: false } */
     pagination?: PaginationConfig;
     /** 容器 class */
-    class?: string;
+    containerClass?: string;
   }
 
   let {
@@ -31,7 +31,7 @@
     rowActions = [],
     emptyText = '暂无数据',
     pagination,
-    class: containerClass = ''
+    containerClass = '',
   }: Props = $props();
 
   // ---- 内部状态 ----
@@ -47,9 +47,7 @@
     if (currentPage > totalPages) currentPage = totalPages;
   });
 
-  let paginatedRows = $derived(
-    rows.slice((currentPage - 1) * pageSize, currentPage * pageSize)
-  );
+  let paginatedRows = $derived(rows.slice((currentPage - 1) * pageSize, currentPage * pageSize));
 
   function goToPage(page: number) {
     if (page < 1) page = 1;
@@ -62,11 +60,7 @@
     const out: (number | 'ellipsis')[] = [];
     const around = 2;
     for (let p = 1; p <= totalPages; p++) {
-      if (
-        p === 1 ||
-        p === totalPages ||
-        (p >= currentPage - around && p <= currentPage + around)
-      ) {
+      if (p === 1 || p === totalPages || (p >= currentPage - around && p <= currentPage + around)) {
         out.push(p);
       } else if (out[out.length - 1] !== 'ellipsis') {
         out.push('ellipsis');
@@ -99,7 +93,11 @@
             {#each columns as col (col.key)}
               <th
                 class="py-3 px-4 font-semibold text-gray-600
-                  {col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left'}
+                  {col.align === 'center'
+                  ? 'text-center'
+                  : col.align === 'right'
+                    ? 'text-right'
+                    : 'text-left'}
                   {col.thClass ?? ''}"
                 style={col.width ? `width:${col.width}` : ''}
               >
@@ -120,7 +118,11 @@
             >
               {#each columns as col (col.key)}
                 <td
-                  class="py-3 px-4 {col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left'}
+                  class="py-3 px-4 {col.align === 'center'
+                    ? 'text-center'
+                    : col.align === 'right'
+                      ? 'text-right'
+                      : 'text-left'}
                     {col.class ?? ''}"
                 >
                   {#if col.cell}
@@ -137,7 +139,8 @@
                       {#if !action.show || action.show(row)}
                         <button
                           onclick={() => action.onclick(row)}
-                          class="cursor-pointer {action.class ?? 'px-2 py-1 text-xs text-blue-600 hover:text-white hover:bg-blue-600 border border-blue-600 rounded transition-colors'}"
+                          class="cursor-pointer {action.class ??
+                            'px-2 py-1 text-xs text-blue-600 hover:text-white hover:bg-blue-600 border border-blue-600 rounded transition-colors'}"
                         >
                           {#if action.label}{action.label}{/if}
                           {#if action.snippet}{@render action.snippet(row)}{/if}
@@ -158,8 +161,9 @@
       <div class="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 px-2">
         {#if showInfo}
           <p class="text-sm text-gray-500">
-            共 <span class="font-medium text-gray-700">{rows.length}</span> 条记录，
-            第 <span class="font-medium text-gray-700">{currentPage}</span> /
+            共 <span class="font-medium text-gray-700">{rows.length}</span> 条记录， 第
+            <span class="font-medium text-gray-700">{currentPage}</span>
+            /
             <span class="font-medium text-gray-700">{totalPages}</span> 页
           </p>
         {:else}
@@ -173,7 +177,12 @@
             class="cursor-pointer px-3 py-1.5 text-sm rounded-md border border-gray-300 text-gray-600 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
           </button>
 
@@ -186,8 +195,8 @@
                 aria-current={page === currentPage ? 'page' : undefined}
                 class="cursor-pointer min-w-9 px-3 py-1.5 text-sm rounded-md border transition-colors
                   {page === currentPage
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'border-gray-300 text-gray-600 hover:bg-gray-100'}"
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'border-gray-300 text-gray-600 hover:bg-gray-100'}"
               >
                 {page}
               </button>
@@ -201,7 +210,12 @@
             class="cursor-pointer px-3 py-1.5 text-sm rounded-md border border-gray-300 text-gray-600 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5l7 7-7 7"
+              />
             </svg>
           </button>
         </nav>

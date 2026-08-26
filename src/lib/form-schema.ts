@@ -50,7 +50,7 @@ export const OVERTIME_FORM_SCHEMA: FormFieldDefinition[] = [
     type: 'text',
     placeholder: '请输入申请人姓名',
     required: true,
-    width: 'full'
+    width: 'full',
   },
   {
     name: 'department',
@@ -59,7 +59,7 @@ export const OVERTIME_FORM_SCHEMA: FormFieldDefinition[] = [
     placeholder: '请选择部门',
     required: true,
     width: 'half',
-    group: 'job'
+    group: 'job',
   },
   {
     name: 'position',
@@ -68,7 +68,7 @@ export const OVERTIME_FORM_SCHEMA: FormFieldDefinition[] = [
     placeholder: '请选择职位',
     required: true,
     width: 'half',
-    group: 'job'
+    group: 'job',
   },
   {
     name: 'startTime',
@@ -77,7 +77,7 @@ export const OVERTIME_FORM_SCHEMA: FormFieldDefinition[] = [
     required: true,
     placeholder: '请选择开始时间',
     width: 'half',
-    group: 'time'
+    group: 'time',
   },
   {
     name: 'endTime',
@@ -86,7 +86,7 @@ export const OVERTIME_FORM_SCHEMA: FormFieldDefinition[] = [
     required: true,
     placeholder: '请选择结束时间',
     width: 'half',
-    group: 'time'
+    group: 'time',
   },
   {
     name: 'reason',
@@ -96,8 +96,8 @@ export const OVERTIME_FORM_SCHEMA: FormFieldDefinition[] = [
     required: true,
     maxLength: 200,
     rows: 4,
-    width: 'full'
-  }
+    width: 'full',
+  },
 ];
 
 /**
@@ -110,7 +110,7 @@ export function getEmptyFormData(): OvertimeFormData {
     position: '',
     startTime: '',
     endTime: '',
-    reason: ''
+    reason: '',
   };
 }
 
@@ -119,7 +119,7 @@ export function getEmptyFormData(): OvertimeFormData {
  */
 export function getVisibleFields(
   schema: FormFieldDefinition[],
-  mode: 'create' | 'edit'
+  mode: 'create' | 'edit',
 ): FormFieldDefinition[] {
   return schema.filter((field) => {
     if (mode === 'create' && field.editOnly) return false;
@@ -134,7 +134,7 @@ export function getVisibleFields(
  */
 export function validateFormData(
   data: Partial<OvertimeFormData>,
-  schema: FormFieldDefinition[] = OVERTIME_FORM_SCHEMA
+  schema: FormFieldDefinition[] = OVERTIME_FORM_SCHEMA,
 ): Record<string, string> {
   const errors: Record<string, string> = {};
 

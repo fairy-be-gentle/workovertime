@@ -9,6 +9,7 @@
 - **TailwindCSS v4** — 原子化 CSS
 - **Vitest** — 单元测试
 - **ECharts** — 数据可视化
+- **ESLint + Prettier** — 代码规范
 
 ## 功能特性
 
@@ -26,14 +27,14 @@
 - 支持关键字搜索（按申请人）
 - 支持状态筛选（全部 / 待审批 / 已通过 / 已驳回）
 - 支持时间范围筛选（今天 / 最近一周 / 最近一个月 / 最近三个月 / 最近一年 / 自定义）
-- 点击行或操作按钮查看详情 / 审批 / 编辑 / 删除
+- 点击行或操作按钮查看详情
 - 分页展示，每页 10 条
 
 ### 申请详情
 
 - 完整展示申请信息及工作流历史
 - 显示审批节点（提交 → 审批 → 完成/驳回）
-- 仅待审批状态可执行审批操作
+- 仅待审批状态可执行审批/驳回操作
 
 ### 统计报表
 
@@ -44,7 +45,7 @@
 
 ### 数据持久化
 
-- 利用框架自带适配器，将数存储在服务端（类似ssr）
+- 服务端文件存储，数据存储在 `data/applications.json`
 
 ## 表单字段
 
@@ -115,34 +116,40 @@ npm run format
 src/
 ├── lib/
 │   ├── types.ts                      # 类型定义（OvertimeRecord, ApplicationStatus, WorkflowStep 等）
-│   ├── storage.ts                    # localStorage 工具函数
-│   ├── store.ts                     # Svelte 状态管理
+│   ├── storage.ts                    # 客户端工具函数（格式化、验证等）
+│   ├── store.ts                      # Svelte 状态管理
 │   ├── form-schema.ts                # 表单字段定义与验证器
+│   ├── server/
+│   │   └── storage.ts                # 服务端存储（文件 IO）
 │   └── components/
-│       ├── DynamicTable.svelte       # 通用动态表格组件
-│       ├── dynamic-table-types.ts    # 表格类型定义
-│       ├── DynamicForm.svelte        # 动态表单组件
-│       ├── ApplicationList.svelte    # 申请列表组件（兼容旧版）
-│       ├── ApplicationDetail.svelte   # 申请详情弹窗组件
-│       ├── Statistics.svelte        # 统计报表组件（ECharts 图表）
-│       └── Timeline.svelte           # 工作流时间线组件
+│       ├── DynamicTable.svelte        # 通用动态表格组件
+│       ├── dynamic-table-types.ts     # 表格类型定义
+│       ├── DynamicForm.svelte         # 动态表单组件
+│       ├── Statistics.svelte          # 统计报表组件（ECharts 图表）
+│       └── Timeline.svelte            # 工作流时间线组件
 ├── routes/
-│   ├── +layout.svelte               # 布局组件
-│   ├── +page.svelte                 # 主页面（列表 + 统计切换）
-│   ├── +page.server.ts             # 主页面服务端加载
+│   ├── +layout.svelte                # 布局组件
+│   ├── +page.svelte                  # 主页面（列表 + 统计切换）
+│   ├── +page.server.ts               # 主页面服务端加载
 │   ├── new/
-│   │   ├── +page.svelte            # 新建/编辑申请页
-│   │   └── +page.server.ts         # 新建/编辑操作处理
+│   │   ├── +page.svelte              # 新建/编辑申请页
+│   │   └── +page.server.ts           # 新建/编辑操作处理
 │   ├── preview/
-│   │   └── +page.svelte            # 预览申请页
+│   │   └── +page.svelte              # 预览申请页
 │   └── record/
 │       └── [id]/
-│           ├── +page.svelte        # 申请详情页
-│           └── +page.server.ts     # 详情数据加载
+│           ├── +page.svelte           # 申请详情页（审批/驳回）
+│           └── +page.server.ts        # 详情数据加载
 ├── test/
-│   ├── setup.ts                    # Vitest 测试配置
-│   └── OvertimeApplication.test.ts # 加班申请核心逻辑测试
-├── app.css                         # 全局样式
-├── app.html                        # HTML 模板
-└── app.d.ts                        # 类型声明
+│   ├── setup.ts                      # Vitest 测试配置
+│   ├── fixtures.ts                   # 测试数据工厂
+│   ├── validation.test.ts            # 表单验证测试
+│   ├── storage.test.ts               # 存储工具测试
+│   ├── business.test.ts              # 业务逻辑测试
+│   ├── components.test.ts           # 组件测试
+│   ├── page-flow.test.ts            # 页面流程测试
+│   └── approval-flow.test.ts         # 审批流程测试
+├── app.css                           # 全局样式
+├── app.html                          # HTML 模板
+└── app.d.ts                          # 类型声明
 ```
